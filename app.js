@@ -66,5 +66,31 @@ app.use(function(err, req, res, next) {
   });
 });
 
+
+
+// var session = require("express-session");
+// var MongoStore=require("connect-mongo")(session);
+
+
+var session = require('express-session');
+var connect = require('connect');
+var SessionStore = require("connect-mongo")(session);//require("session-mongoose")(connect);
+var store = new SessionStore({
+  url:"mongodb://localhost/session",
+  interval: 120000
+});
+app.use(session({
+  secret: 'test.com',
+  store: store,
+  cookie:{maxAge:10000} //expire session in 10 seconds
+}));
+// //用于把登录用户设置到res.locals里面，在home.html里显示
+// app.use(function(req,res,next){
+//   res.locals.user = req.session.user;
+//   console.log('Session is = ',req.session.user);
+//   next();
+// });
+
+
 // 输出模型app
 module.exports = app;
