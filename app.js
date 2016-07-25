@@ -29,16 +29,51 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 // 定义静态文件目录
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(function (req, res, next) {
+  console.log("自己的中间件1");
+  next();
+});
+
+var session = require('express-session');
+var connect = require('connect');
+var SessionStore = require('connect-mongo')(session);//require("connect-mongo")(session);//require("session-mongoose")(connect);
+var store = new SessionStore({
+  url: "mongodb://localhost/sessions",
+  // interval: 120000
+  //db:"sessions"
+});
+app.use(session({
+    key:"testapp",
+    secret: 'keyboard cat',
+    store: store,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 10000 } //expire session in 10 seconds
+  }));
+//用于把登录用户设置到res.locals里面，在home.html里显示
+app.use(function (req, res, next) {
+  console.log('Session');
+  res.locals.user = req.session.user;
+  console.log('Session is = ', req.session.user);
+  next();
+});
+
+
 // 匹配路径和路由
 app.use('/', routes);
 app.use('/users', users);
 
+
 // 404错误处理
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
+  console.log("中间件err");
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
+
+
 
 // error handlers
 
@@ -46,19 +81,19 @@ app.use(function(req, res, next) {
 // will print stacktrace
 // 开发环境，500错误处理和错误堆栈跟踪
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
+  app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('error', {
       message: err.message,
       error: err
     });
+    next();
   });
 }
-
 // production error handler
 // no stacktraces leaked to user
 // 生产环境，500错误处理
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render('error', {
     message: err.message,
@@ -68,28 +103,7 @@ app.use(function(err, req, res, next) {
 
 
 
-// var session = require("express-session");
-// var MongoStore=require("connect-mongo")(session);
 
-
-var session = require('express-session');
-var connect = require('connect');
-var SessionStore = require("connect-mongo")(session);//require("session-mongoose")(connect);
-var store = new SessionStore({
-  url:"mongodb://localhost/session",
-  interval: 120000
-});
-app.use(session({
-  secret: 'test.com',
-  store: store,
-  cookie:{maxAge:10000} //expire session in 10 seconds
-}));
-// //用于把登录用户设置到res.locals里面，在home.html里显示
-// app.use(function(req,res,next){
-//   res.locals.user = req.session.user;
-//   console.log('Session is = ',req.session.user);
-//   next();
-// });
 
 
 // 输出模型app
